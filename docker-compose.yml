@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    ports:
+      - "9080:8080"
+    volumes:
+      - ./catalog-service/data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/info/1')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
