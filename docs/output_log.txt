@@ -1,0 +1,206 @@
+Bazar.com Microservices System - Test Output Log
+Generated: 2025-11-10 11:16:05
+================================================================================
+
+Starting comprehensive system tests...
+
+
+================================================================================
+TEST 1: Search for 'distributed systems' books
+================================================================================
+Request: GET http://localhost:9000/search/distributed%20systems
+Status Code: 200
+Response:
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "How to get a good grade in DOS in 40 minutes a day"
+    },
+    {
+      "id": 2,
+      "title": "RPCs for Noobs"
+    }
+  ],
+  "success": true
+}
+
+Found 2 book(s):
+  - ID: 1, Title: How to get a good grade in DOS in 40 minutes a day
+  - ID: 2, Title: RPCs for Noobs
+
+================================================================================
+TEST 2: Get info for book ID 1
+================================================================================
+Request: GET http://localhost:9000/info/1
+Status Code: 200
+Response:
+{
+  "data": {
+    "price": 50,
+    "quantity": 5,
+    "title": "How to get a good grade in DOS in 40 minutes a day"
+  },
+  "success": true
+}
+
+Book Details:
+  - Title: How to get a good grade in DOS in 40 minutes a day
+  - Quantity: 5
+  - Price: $50
+
+================================================================================
+TEST 3: Buy book ID 1 (Expected: SUCCESS)
+================================================================================
+Request: POST http://localhost:9000/buy/1
+Status Code: 200
+Response:
+{
+  "message": "bought book How to get a good grade in DOS in 40 minutes a day",
+  "success": true
+}
+
+✓ Purchase successful: bought book How to get a good grade in DOS in 40 minutes a day
+
+================================================================================
+TEST 4: Verify quantity decreased for book ID 1
+================================================================================
+Request: GET http://localhost:9000/info/1
+Status Code: 200
+Response:
+{
+  "data": {
+    "price": 50,
+    "quantity": 4,
+    "title": "How to get a good grade in DOS in 40 minutes a day"
+  },
+  "success": true
+}
+
+Updated Book Details:
+  - Title: How to get a good grade in DOS in 40 minutes a day
+  - Quantity: 4 (decreased from 5 to 4)
+  - Price: $50
+
+================================================================================
+TEST 5: Buy book ID 1 multiple times until out of stock
+================================================================================
+Current quantity: 4
+
+Purchase attempt 1:
+Request: POST http://localhost:9000/buy/1
+Status Code: 200
+Response: {
+  "message": "bought book How to get a good grade in DOS in 40 minutes a day",
+  "success": true
+}
+
+Purchase attempt 2:
+Request: POST http://localhost:9000/buy/1
+Status Code: 200
+Response: {
+  "message": "bought book How to get a good grade in DOS in 40 minutes a day",
+  "success": true
+}
+
+Purchase attempt 3:
+Request: POST http://localhost:9000/buy/1
+Status Code: 200
+Response: {
+  "message": "bought book How to get a good grade in DOS in 40 minutes a day",
+  "success": true
+}
+
+Purchase attempt 4:
+Request: POST http://localhost:9000/buy/1
+Status Code: 200
+Response: {
+  "message": "bought book How to get a good grade in DOS in 40 minutes a day",
+  "success": true
+}
+
+Purchase attempt (out of stock):
+Request: POST http://localhost:9000/buy/1
+Status Code: 400
+Response:
+{
+  "message": "Book out of stock",
+  "success": false
+}
+
+✓ Failed purchase correctly handled: Book is out of stock
+
+================================================================================
+TEST 6: Update price for book ID 3 to $75
+================================================================================
+Current price: $50
+Request: PUT http://localhost:9000/update/3/price
+Body: {'price': 75}
+Status Code: 200
+Response:
+{
+  "message": "Price updated from $50 to $75",
+  "success": true
+}
+
+✓ Price update successful
+Verified new price: $75
+
+================================================================================
+TEST 7: Update stock for book ID 3 by 10
+================================================================================
+Current stock: 5
+Request: PUT http://localhost:9000/update/3/stock
+Body: {'quantity_change': 10}
+Status Code: 200
+Response:
+{
+  "message": "Stock increased from 5 to 15",
+  "success": true
+}
+
+✓ Stock update successful
+Verified new stock: 15
+
+================================================================================
+TEST 8: Test invalid update operations
+================================================================================
+Testing negative price update:
+Request: PUT http://localhost:9000/update/1/price
+Body: {'price': -10}
+Status Code: 400
+Response:
+{
+  "message": "Price must be greater than 0",
+  "success": false
+}
+
+Testing update for non-existent book:
+Request: PUT http://localhost:9000/update/999/price
+Body: {'price': 25}
+Status Code: 404
+Response:
+{
+  "message": "Book not found",
+  "success": false
+}
+
+Testing stock reduction below zero:
+Request: PUT http://localhost:9000/update/1/stock
+Body: {'quantity_change': -100}
+Status Code: 400
+Response:
+{
+  "message": "Cannot reduce stock below 0. Current: 0, Requested change: -100",
+  "success": false
+}
+
+✓ Invalid operations correctly rejected
+
+================================================================================
+All tests completed successfully!
+✅ CRUD Operations: Create (N/A), Read (✓), Update (✓), Delete (N/A)
+✅ Business Logic: Stock management, price updates, error handling
+✅ API Design: RESTful endpoints, proper HTTP status codes
+✅ Data Persistence: Thread-safe file operations
+================================================================================
