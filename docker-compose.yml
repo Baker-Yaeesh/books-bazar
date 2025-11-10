@@ -1,6 +1,39 @@
 version: '3.8'
 
 services:
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    ports:
+      - "9080:8080"
+    volumes:
+      - ./catalog-service/data:/app/data
+    networks:
+      - bazar-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/info/1')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "9081:8081"
+    volumes:
+      - ./order-service/data:/app/data
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog-service:8080
+    depends_on:
+      - catalog-service
+    networks:
+      - bazar-network
+
   frontend-service:
     build:
       context: ./frontend-service
@@ -8,6 +41,12 @@ services:
     container_name: frontend-service
     ports:
       - "9000:80"
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog-service:8080
+      - ORDER_SERVICE_URL=http://order-service:8081
+    depends_on:
+      - catalog-service
+      - order-service
     networks:
       - bazar-network
 
