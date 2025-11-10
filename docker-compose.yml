@@ -1,17 +1,16 @@
 version: '3.8'
 
 services:
-  catalog-service:
+  frontend-service:
     build:
-      context: ./catalog-service
+      context: ./frontend-service
       dockerfile: Dockerfile
-    container_name: catalog-service
+    container_name: frontend-service
     ports:
-      - "9080:8080"
-    volumes:
-      - ./catalog-service/data:/app/data
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/info/1')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      - "9000:80"
+    networks:
+      - bazar-network
+
+networks:
+  bazar-network:
+    driver: bridge
