@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # Catalog Service - Replica 1 (Primary)
+  catalog-replica-1:
+    build:
+      context: ./catalog-replica-1
+      dockerfile: Dockerfile
+    container_name: catalog-replica-1
+    ports:
+      - "9080:8080"
+    volumes:
+      - ./catalog-replica-1/data:/app/data
+    environment:
+      - CATALOG_REPLICA_2_URL=http://catalog-replica-2:8082
+      - FRONTEND_URL=http://frontend-service:80
+    networks:
+      - bazar-lab2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/info/1')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Catalog Service - Replica 2 (Backup)
+  catalog-replica-2:
+    build:
+      context: ./catalog-replica-2
+      dockerfile: Dockerfile
+    container_name: catalog-replica-2
+    ports:
+      - "9082:8082"
+    volumes:
+      - ./catalog-replica-2/data:/app/data
+    networks:
+      - bazar-lab2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/info/1')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Order Service - Replica 1 (Primary)
+  order-replica-1:
+    build:
+      context: ./order-replica-1
+      dockerfile: Dockerfile
+    container_name: order-replica-1
+    ports:
+      - "9081:8081"
+    volumes:
+      - ./order-replica-1/data:/app/data
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog-replica-1:8080
+      - ORDER_REPLICA_2_URL=http://order-replica-2:8083
+    depends_on:
+      - catalog-replica-1
+    networks:
+      - bazar-lab2-network
+
+  # Order Service - Replica 2 (Backup)
+  order-replica-2:
+    build:
+      context: ./order-replica-2
+      dockerfile: Dockerfile
+    container_name: order-replica-2
+    ports:
+      - "9083:8083"
+    volumes:
+      - ./order-replica-2/data:/app/data
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog-replica-1:8080
+    depends_on:
+      - catalog-replica-1
+    networks:
+      - bazar-lab2-network
+
+  # Frontend Service (with caching and load balancing)
+  frontend-service:
+    build:
+      context: ./frontend-service
+      dockerfile: Dockerfile
+    container_name: frontend-service
+    ports:
+      - "9000:80"
+    environment:
+      - CATALOG_REPLICA_1_URL=http://catalog-replica-1:8080
+      - CATALOG_REPLICA_2_URL=http://catalog-replica-2:8082
+      - ORDER_REPLICA_1_URL=http://order-replica-1:8081
+      - ORDER_REPLICA_2_URL=http://order-replica-2:8083
+    depends_on:
+      - catalog-replica-1
+      - catalog-replica-2
+      - order-replica-1
+      - order-replica-2
+    networks:
+      - bazar-lab2-network
+
+networks:
+  bazar-lab2-network:
+    driver: bridge
